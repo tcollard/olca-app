@@ -33,8 +33,8 @@ public class ProductSystemWizard extends AbstractWizard<ProductSystem> {
 	}
 
 	/**
-	 * Optionally sets the reference process for the product system that should
-	 * be created.
+	 * Optionally sets the reference process for the product system that should be
+	 * created.
 	 */
 	public void setProcess(Process process) {
 		this.process = process;
@@ -135,8 +135,10 @@ public class ProductSystemWizard extends AbstractWizard<ProductSystem> {
 				ProductSystemBuilder builder = new ProductSystemBuilder(cache);
 				builder.setPreferredType(preferredType);
 				builder.setLinkingMethod(linkingMethod);
-				if (system.cutoff != null)
+				if (system.cutoff != null) {
 					builder.setCutoff(system.cutoff);
+				}
+				builder.setProviderRule(ProviderDialog::select);
 				system = builder.autoComplete(system);
 				monitor.done();
 			} catch (Exception e) {
