@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.openlca.app.components.ResultTypeSelection.EventHandler;
-import org.openlca.app.db.Cache;
 import org.openlca.app.db.Database;
 import org.openlca.app.util.CostResultDescriptor;
 import org.openlca.app.util.Labels;
@@ -35,7 +34,7 @@ class SelectionHandler implements EventHandler {
 		this.result = page.result;
 		this.inputBuilder = new TreeContentBuilder(page);
 		calculator = new LocationContribution(
-				result, Cache.getEntityCache());
+				result, Database.get());
 	}
 
 	@Override

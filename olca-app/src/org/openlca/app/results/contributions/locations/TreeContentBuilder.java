@@ -44,10 +44,6 @@ class TreeContentBuilder {
 			if (!(process instanceof ProcessDescriptor))
 				continue;
 			ProcessDescriptor p = (ProcessDescriptor) process;
-			Location location = null;
-			if (p.location != null) {
-				location = cache.get(Location.class, p.location);
-			}
 			List<ProcessDescriptor> list = index.get(location);
 			if (list == null) {
 				list = new ArrayList<>();

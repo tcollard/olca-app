@@ -9,7 +9,6 @@ import org.openlca.app.M;
 import org.openlca.app.rcp.images.Images;
 import org.openlca.app.util.Labels;
 import org.openlca.core.database.EntityCache;
-import org.openlca.core.model.Location;
 import org.openlca.core.model.ModelType;
 import org.openlca.core.model.descriptors.ProcessDescriptor;
 
@@ -50,12 +49,6 @@ public class ProcessViewer extends AbstractComboViewer<ProcessDescriptor> {
 		return ProcessDescriptor.class;
 	}
 
-	private Location getLocation(ProcessDescriptor process) {
-		if (process == null || process.location == null)
-			return null;
-		return cache.get(Location.class, process.location);
-	}
-
 	private class ProcessLabelProvider extends BaseLabelProvider implements ITableLabelProvider {
 
 		@Override
@@ -67,16 +60,15 @@ public class ProcessViewer extends AbstractComboViewer<ProcessDescriptor> {
 		}
 
 		@Override
-		public String getColumnText(Object element, int columnIndex) {
-			ProcessDescriptor process = (ProcessDescriptor) element;
-			switch (columnIndex) {
+		public String getColumnText(Object obj, int col) {
+			ProcessDescriptor d = (ProcessDescriptor) obj;
+			switch (col) {
 			case 0:
-				return process.name;
+				return d.name;
 			case 1:
-				Location location = getLocation(process);
-				return location != null ? location.name : null;
+				return d.location;
 			case 2:
-				return Labels.getDisplayName(process);
+				return Labels.getDisplayName(d);
 			default:
 				return null;
 			}
