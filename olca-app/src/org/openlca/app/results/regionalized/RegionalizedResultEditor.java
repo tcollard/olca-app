@@ -23,10 +23,12 @@ import org.openlca.app.results.contributions.ProcessResultPage;
 import org.openlca.app.results.contributions.locations.LocationPage;
 import org.openlca.app.results.grouping.GroupPage;
 import org.openlca.core.database.ImpactCategoryDao;
+import org.openlca.core.database.ProcessDao;
 import org.openlca.core.math.CalculationSetup;
 import org.openlca.core.math.data_quality.DQResult;
 import org.openlca.core.matrix.LongPair;
 import org.openlca.core.model.ImpactCategory;
+import org.openlca.core.model.Location;
 import org.openlca.core.model.descriptors.CategorizedDescriptor;
 import org.openlca.core.model.descriptors.FlowDescriptor;
 import org.openlca.core.model.descriptors.ImpactCategoryDescriptor;
@@ -50,6 +52,7 @@ public class RegionalizedResultEditor extends FormEditor implements IResultEdito
 	private ImpactCategoryDao impactCategoryDao;
 	private Map<Long, ImpactCategory> impactCategories = new HashMap<>();
 	private Map<LongPair, Map<FlowDescriptor, Double>> factorsMap = new HashMap<>();
+	private Map<Long, Location> processLocations;
 	private DQResult dqResult;
 
 	@Override
@@ -82,6 +85,8 @@ public class RegionalizedResultEditor extends FormEditor implements IResultEdito
 					input.parameterSetKey, ParameterSet.class);
 			factorCalculator = new FactorCalculator(parameterSet,
 					Database.get(), setup);
+			processLocations = new ProcessDao(
+					Database.get()).getProcessLocations();
 			String dqResultKey = input.dqResultKey;
 			if (dqResultKey != null)
 				dqResult = Cache.getAppCache().remove(dqResultKey, DQResult.class);
@@ -142,12 +147,13 @@ public class RegionalizedResultEditor extends FormEditor implements IResultEdito
 		if (!(process instanceof ProcessDescriptor))
 			return defaultFactor(impact, flow);
 		ProcessDescriptor p = (ProcessDescriptor) process;
-		if (p.location == null)
+		Location loc = processLocations.get(p.id);
+		if (loc == null)
 			return defaultFactor(impact, flow);
-		Map<FlowDescriptor, Double> impactFactors = getImpactFactors(impact.id, p.location);
-		if (!impactFactors.containsKey(flow))
+		Map<FlowDescriptor, Double> factors = getImpactFactors(impact.id, loc.id);
+		if (!factors.containsKey(flow))
 			return 0d;
-		return impactFactors.get(flow);
+		return factors.get(flow);
 	}
 
 	private double defaultFactor(ImpactCategoryDescriptor impact, FlowDescriptor flow) {

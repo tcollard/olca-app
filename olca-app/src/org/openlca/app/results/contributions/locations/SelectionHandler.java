@@ -41,10 +41,9 @@ class SelectionHandler implements EventHandler {
 	public void flowSelected(FlowDescriptor flow) {
 		if (calculator == null || flow == null)
 			return;
-		String unit = Labels.getRefUnit(flow);
 		ContributionSet<Location> set = calculator.calculate(flow);
 		double total = result.getTotalFlowResult(flow);
-		setData(set, flow, total, unit);
+		setData(set, flow, total, flow.refUnit);
 	}
 
 	@Override

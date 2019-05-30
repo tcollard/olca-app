@@ -14,7 +14,6 @@ import org.openlca.core.model.AllocationMethod;
 import org.openlca.core.model.Category;
 import org.openlca.core.model.Currency;
 import org.openlca.core.model.Flow;
-import org.openlca.core.model.FlowProperty;
 import org.openlca.core.model.FlowPropertyType;
 import org.openlca.core.model.FlowType;
 import org.openlca.core.model.ImpactMethod.ParameterMean;
@@ -25,8 +24,6 @@ import org.openlca.core.model.ProcessType;
 import org.openlca.core.model.RiskLevel;
 import org.openlca.core.model.RootEntity;
 import org.openlca.core.model.UncertaintyType;
-import org.openlca.core.model.Unit;
-import org.openlca.core.model.UnitGroup;
 import org.openlca.core.model.descriptors.BaseDescriptor;
 import org.openlca.core.model.descriptors.CategorizedDescriptor;
 import org.openlca.core.model.descriptors.FlowDescriptor;
@@ -65,19 +62,15 @@ public class Labels {
 		String text = d.name;
 		if (cache == null)
 			return text;
-		Long locationId = null;
+		String locationCode = null;
 		if (d instanceof ProcessDescriptor) {
-			ProcessDescriptor process = (ProcessDescriptor) d;
-			locationId = process.location;
+			locationCode = ((ProcessDescriptor) d).location;
 		}
 		if (d instanceof FlowDescriptor) {
-			FlowDescriptor flow = (FlowDescriptor) d;
-			locationId = flow.location;
+			locationCode = ((FlowDescriptor) d).location;
 		}
-		if (locationId != null) {
-			Location loc = cache.get(Location.class, locationId);
-			if (loc != null && !Strings.isNullOrEmpty(loc.code))
-				text = text + " - " + loc.code;
+		if (!Strings.isNullOrEmpty(locationCode)) {
+			text = text + " - " + locationCode;
 		}
 		return text;
 	}
@@ -86,23 +79,6 @@ public class Labels {
 		if (d == null)
 			return "";
 		return d.description;
-	}
-
-	public static String getRefUnit(FlowDescriptor flow) {
-		if (flow == null)
-			return "";
-		FlowProperty refProp = Cache.getEntityCache().get(
-				FlowProperty.class,
-				flow.refFlowPropertyId);
-		if (refProp == null)
-			return "";
-		UnitGroup unitGroup = refProp.unitGroup;
-		if (unitGroup == null)
-			return "";
-		Unit unit = unitGroup.referenceUnit;
-		if (unit == null)
-			return "";
-		return unit.name;
 	}
 
 	/**

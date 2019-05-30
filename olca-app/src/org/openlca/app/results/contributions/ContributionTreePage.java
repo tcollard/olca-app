@@ -220,7 +220,7 @@ public class ContributionTreePage extends FormPage {
 		private String getUnit() {
 			if (selection instanceof FlowDescriptor) {
 				FlowDescriptor flow = (FlowDescriptor) selection;
-				return Labels.getRefUnit(flow);
+				return flow.refUnit;
 			} else if (selection instanceof ImpactCategoryDescriptor) {
 				ImpactCategoryDescriptor impact = (ImpactCategoryDescriptor) selection;
 				return impact.referenceUnit;

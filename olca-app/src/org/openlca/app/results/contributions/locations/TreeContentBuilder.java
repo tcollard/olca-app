@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.openlca.app.db.Cache;
+import org.openlca.app.db.Database;
 import org.openlca.app.util.CostResultDescriptor;
-import org.openlca.core.database.EntityCache;
+import org.openlca.core.database.ProcessDao;
 import org.openlca.core.model.Location;
 import org.openlca.core.model.descriptors.BaseDescriptor;
 import org.openlca.core.model.descriptors.CategorizedDescriptor;
@@ -39,15 +39,17 @@ class TreeContentBuilder {
 	private void initProcessIndex() {
 		if (result == null)
 			return;
-		EntityCache cache = Cache.getEntityCache();
-		for (CategorizedDescriptor process : result.getProcesses()) {
-			if (!(process instanceof ProcessDescriptor))
+		Map<Long, Location> locs = new ProcessDao(
+				Database.get()).getProcessLocations();
+		for (CategorizedDescriptor d : result.getProcesses()) {
+			if (!(d instanceof ProcessDescriptor))
 				continue;
-			ProcessDescriptor p = (ProcessDescriptor) process;
-			List<ProcessDescriptor> list = index.get(location);
+			ProcessDescriptor p = (ProcessDescriptor) d;
+			Location loc = locs.get(p.id);
+			List<ProcessDescriptor> list = index.get(loc);
 			if (list == null) {
 				list = new ArrayList<>();
-				index.put(location, list);
+				index.put(loc, list);
 			}
 			list.add(p);
 		}

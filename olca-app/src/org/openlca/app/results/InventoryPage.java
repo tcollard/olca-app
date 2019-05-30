@@ -233,7 +233,7 @@ public class InventoryPage extends FormPage {
 				double v = getAmount(flow);
 				return Numbers.format(v);
 			case 4:
-				return Labels.getRefUnit(flow);
+				return flow.refUnit;
 			default:
 				return null;
 			}
@@ -253,7 +253,7 @@ public class InventoryPage extends FormPage {
 				double v = getAmount(item);
 				return Numbers.format(v);
 			case 4:
-				return Labels.getRefUnit(item.flow);
+				return item.flow.refUnit;
 			default:
 				return null;
 			}

@@ -279,7 +279,7 @@ public class ProcessResultPage extends FormPage {
 			case 3:
 				return Numbers.format(flowResult.getDirectResult(flow));
 			case 4:
-				return Labels.getRefUnit(flow);
+				return flow.refUnit;
 			default:
 				return null;
 			}

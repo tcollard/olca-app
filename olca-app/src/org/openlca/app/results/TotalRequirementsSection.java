@@ -233,7 +233,7 @@ class TotalRequirementsSection {
 			FlowDescriptor flow = product.flow;
 			if (flow != null) {
 				this.product = Labels.getDisplayName(flow);
-				this.unit = Labels.getRefUnit(flow);
+				this.unit = flow.refUnit;
 				this.flowtype = flow.flowType;
 			}
 		}

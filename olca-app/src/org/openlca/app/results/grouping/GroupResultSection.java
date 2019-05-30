@@ -14,7 +14,6 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
 import org.openlca.app.M;
 import org.openlca.app.results.contributions.ContributionChart;
-import org.openlca.app.util.Labels;
 import org.openlca.app.util.UI;
 import org.openlca.app.viewers.BaseLabelProvider;
 import org.openlca.app.viewers.combo.AbstractComboViewer;
@@ -51,7 +50,7 @@ class GroupResultSection {
 		String unit;
 		if (resultType == FLOW) {
 			FlowDescriptor flow = flowViewer.getSelected();
-			unit = Labels.getRefUnit(flow);
+			unit = flow.refUnit;
 			selection = flow;
 		} else {
 			ImpactCategoryDescriptor impact = impactViewer.getSelected();

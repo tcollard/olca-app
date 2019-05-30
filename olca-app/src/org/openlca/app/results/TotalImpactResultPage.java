@@ -192,7 +192,7 @@ public class TotalImpactResultPage extends FormPage {
 			case 3:
 				if (item.flowAmount() == null)
 					return "";
-				return item.flowAmountUnit();
+				return item.flow.refUnit;
 			case 4:
 				return format(item.impactFactor());
 			case 5:
@@ -396,7 +396,7 @@ public class TotalImpactResultPage extends FormPage {
 			String unit = impact.referenceUnit;
 			if (unit == null)
 				unit = "1";
-			return unit + "/" + Labels.getRefUnit(flow);
+			return unit + "/" + flow.refUnit;
 		}
 
 		String impactFactorString() {
@@ -415,16 +415,11 @@ public class TotalImpactResultPage extends FormPage {
 			return result.getDirectFlowResult(process, flow);
 		}
 
-		String flowAmountUnit() {
-			return Labels.getRefUnit(flow);
-		}
-
 		String flowAmountString() {
 			if (type() != ModelType.FLOW)
 				return null;
 			String amount = Numbers.format(flowAmount());
-			String unit = flowAmountUnit();
-			return amount + " " + unit;
+			return amount + " " + flow.refUnit;
 		}
 
 		double result() {

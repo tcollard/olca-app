@@ -230,8 +230,7 @@ public class ImpactChecksPage extends FormPage {
 					return null;
 				FlowDescriptor flow = (FlowDescriptor) n.descriptor;
 				double val = result.getTotalFlowResult(flow);
-				String unit = Labels.getRefUnit(flow);
-				return Numbers.format(val) + " " + unit;
+				return Numbers.format(val) + " " + flow.refUnit;
 			default:
 				return null;
 			}

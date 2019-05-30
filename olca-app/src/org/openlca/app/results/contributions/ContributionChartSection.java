@@ -10,7 +10,6 @@ import org.eclipse.ui.forms.widgets.Section;
 import org.openlca.app.M;
 import org.openlca.app.results.ImageExportAction;
 import org.openlca.app.util.Actions;
-import org.openlca.app.util.Labels;
 import org.openlca.app.util.UI;
 import org.openlca.app.viewers.AbstractViewer;
 import org.openlca.app.viewers.combo.FlowViewer;
@@ -102,7 +101,7 @@ public class ContributionChartSection {
 		ContributionSet<CategorizedDescriptor> contributionSet = null;
 		if (selection instanceof FlowDescriptor) {
 			FlowDescriptor flow = (FlowDescriptor) selection;
-			unit = Labels.getRefUnit(flow);
+			unit = flow.refUnit;
 			contributionSet = provider.getProcessContributions(flow);
 		} else if (selection instanceof ImpactCategoryDescriptor) {
 			ImpactCategoryDescriptor impact = (ImpactCategoryDescriptor) selection;
