@@ -1,7 +1,7 @@
 package org.openlca.app.editors.reports;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
@@ -72,7 +72,7 @@ public class ReportViewer extends SimpleFormEditor {
 			Composite comp = form.getBody();
 			comp.setLayout(new FillLayout());
 			try {
-				Browser b = new Browser(comp, SWT.NONE);
+				var b = new Browser(comp, SWT.NONE);
 				b.setJavascriptEnabled(true);
 				UI.onLoaded(b, HtmlFolder.getUrl("report.html"), () -> {
 					Gson gson = new Gson();

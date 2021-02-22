@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.UUID;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.editor.FormPage;

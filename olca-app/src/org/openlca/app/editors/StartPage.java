@@ -3,7 +3,7 @@ package org.openlca.app.editors;
 import java.util.HashMap;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.IManagedForm;
@@ -45,7 +45,7 @@ public class StartPage extends SimpleFormEditor {
 			ScrolledForm form = mform.getForm();
 			Composite comp = form.getBody();
 			comp.setLayout(new FillLayout());
-			Browser browser = new Browser(comp, SWT.NONE);
+			var browser = new Browser(comp, SWT.NONE);
 			browser.setJavascriptEnabled(true);
 
 			// handles link clicks and opens them in the browser

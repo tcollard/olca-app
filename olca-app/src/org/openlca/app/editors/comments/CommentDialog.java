@@ -1,7 +1,7 @@
 package org.openlca.app.editors.comments;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.FormDialog;
@@ -32,7 +32,7 @@ public class CommentDialog extends FormDialog {
 				M.Comments + CommentLabels.get(path));
 		Composite body = UI.formBody(form, mForm.getToolkit());
 		body.setLayout(new FillLayout());
-		Browser browser = new Browser(body, SWT.NONE);
+		var browser = new Browser(body, SWT.NONE);
 		browser.setJavascriptEnabled(true);
 		UI.bindFunction(browser, "getLabel", (args) -> {
 			if (args == null || args.length == 0)

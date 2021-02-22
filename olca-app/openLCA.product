@@ -58,6 +58,9 @@ project and other open source software.
 
    <plugins>
       <plugin id="com.ibm.icu"/>
+      <plugin id="com.make.chromium.cef.cocoa.macosx.x86_64" fragment="true"/>
+      <plugin id="com.make.chromium.cef.gtk.linux.x86_64" fragment="true"/>
+      <plugin id="com.make.chromium.cef.win32.win32.x86_64" fragment="true"/>
       <plugin id="javax.annotation"/>
       <plugin id="javax.inject"/>
       <plugin id="olca-app"/>
@@ -132,6 +135,10 @@ project and other open source software.
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.osgi.util"/>
       <plugin id="org.eclipse.swt"/>
+      <plugin id="org.eclipse.swt.chromium"/>
+      <plugin id="org.eclipse.swt.chromium.cocoa.macosx.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.swt.chromium.gtk.linux.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.swt.chromium.win32.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.swt.cocoa.macosx.x86_64" fragment="true"/>
       <plugin id="org.eclipse.swt.gtk.linux.ppc64le" fragment="true"/>
       <plugin id="org.eclipse.swt.gtk.linux.x86_64" fragment="true"/>

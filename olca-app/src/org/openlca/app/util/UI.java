@@ -4,10 +4,10 @@ import java.util.function.Function;
 
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.browser.BrowserFunction;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.ProgressListener;
+import org.eclipse.swt.chromium.Browser;
+import org.eclipse.swt.chromium.BrowserFunction;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -76,7 +76,7 @@ public class UI {
 			Function<Object[], Object> fn) {
 		if (browser == null || name == null || fn == null)
 			return;
-		BrowserFunction func = new BrowserFunction(browser, name) {
+		var func = new BrowserFunction(browser, name) {
 			@Override
 			public Object function(Object[] args) {
 				try {

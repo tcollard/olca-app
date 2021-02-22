@@ -3,7 +3,7 @@ package org.openlca.app.editors.comments;
 import java.util.List;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -59,7 +59,7 @@ public class CommentsPage extends FormPage {
 		ScrolledForm form = UI.formHeader(mForm, title, image);
 		Composite body = UI.formBody(form, mForm.getToolkit());
 		body.setLayout(new FillLayout());
-		Browser browser = new Browser(body, SWT.NONE);
+		var browser = new Browser(body, SWT.NONE);
 		browser.setJavascriptEnabled(true);
 
 		UI.bindFunction(browser, "getLabel", (args) -> {

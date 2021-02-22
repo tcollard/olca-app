@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.chromium.Browser;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -48,7 +48,7 @@ class LocationMap {
 		browserComp.setLayout(new FillLayout());
 		browser = new Browser(browserComp, SWT.NONE);
 		browser.setJavascriptEnabled(true);
-		UI.onLoaded(browser, HtmlFolder.getUrl("location_heatmap.html"), 
+		UI.onLoaded(browser, HtmlFolder.getUrl("location_heatmap.html"),
 				() -> page.refreshSelection());
 	}
 
