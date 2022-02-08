@@ -71,19 +71,24 @@ public class ContributionTreePage extends FormPage {
 		System.out.println("===> BODY: " + body);
 
 		Composite comp = tk.createComposite(body);
-		System.out.println("===> BEFORE CREATE BUTTON <===");
-
-		createExportButton(comp, tk);
-
-		System.out.println("===> AFTER CREATE BUTTON <===");
 
 		UI.gridLayout(comp, 2);
 		System.out.println("===> comp: " + comp);
+
 
 		var selector = ResultItemSelector
 			.on(resultItems)
 			.withSelectionHandler(new SelectionHandler())
 			.create(comp, tk);
+
+		Composite exportComp = tk.createComposite(body);
+		System.out.println("===> BEFORE CREATE BUTTON <===");
+
+		createExportButton(exportComp, tk);
+
+		System.out.println("===> AFTER CREATE BUTTON <===");
+
+		UI.gridLayout(exportComp, 1);
 		Composite treeComp = tk.createComposite(body);
 		System.out.println("===> treeComp: " + treeComp);
 
