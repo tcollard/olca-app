@@ -41,6 +41,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.openlca.io.xls.Excel;
 import org.openlca.app.components.FileChooser;
+import org.openlca.core.matrix.index.TechFlow;
+import org.openlca.util.Strings;
+import org.openlca.core.model.descriptors.FlowDescriptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Objects;
 
+import gnu.trove.list.array.TDoubleArrayList;
 
 public class ContributionTreePage extends FormPage {
 
@@ -65,6 +69,10 @@ public class ContributionTreePage extends FormPage {
 	private int row;
 	private int maxColumn;
 	private double totalResult;
+	private final TDoubleArrayList values = new TDoubleArrayList(100);
+	private UpstreamTree upStreamTree;
+
+
 
 
 
@@ -109,6 +117,34 @@ public class ContributionTreePage extends FormPage {
 	}
 
 
+	private static class Path {
+		final Path prefix;
+		final UpstreamNode node;
+		final int length;
+
+		Path(UpstreamNode node) {
+			this.prefix = null;
+			this.node = node;
+			this.length = 0;
+		}
+
+		Path(UpstreamNode node, Path prefix) {
+			this.prefix = prefix;
+			this.node = node;
+			this.length = 1 + prefix.length;
+		}
+
+		Path append(UpstreamNode node) {
+			return new Path(node, this);
+		}
+
+		int count (TechFlow techFlow) {
+			int c = Objects.equals(techFlow, node.provider()) ? 1 : 0;
+			return prefix != null ? c + prefix.count(techFlow) : c;
+		}
+	}
+
+
 	private void createExportButton(Composite comp, FormToolkit tk) {
 		Logger log = LoggerFactory.getLogger(getClass());
 
@@ -136,16 +172,27 @@ public class ContributionTreePage extends FormPage {
 					Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(header));
 
 
-					UpstreamTree model = result.getTree(elem);
-					tree.setInput(model);
+					upStreamTree = result.getTree(elem);
+					tree.setInput(upStreamTree);
 					System.out.println("REF: ");
-					System.out.println(((ImpactDescriptor) model.ref).referenceUnit);
+					System.out.println(((ImpactDescriptor) upStreamTree.ref).referenceUnit);
 
 					// write the tree
 					row = 1;
 					maxColumn = 0;
-					totalResult = model.root.result();
+					totalResult = upStreamTree.root.result();
 					System.out.println("TOTAL RESULT: " + totalResult);
+					Path path = new Path(upStreamTree.root);
+					traverse(path);
+
+					// write the values
+					var unit = unit();
+					var resultHeader = Strings.nullOrEmpty(unit) ? "Result" : "Result [" + unit + "]";
+					Excel.cell(sheet, 1, maxColumn + 1, resultHeader)
+						.ifPresent(c -> c.setCellStyle(header));
+					for (int i = 0; i < values.size(); i++) {
+						Excel.cell(sheet, i + 2, maxColumn + 1, values.get(i));
+					}
 
 					// write the file
 					try(var fout = new FileOutputStream(file);
@@ -154,7 +201,6 @@ public class ContributionTreePage extends FormPage {
 						wb.write(buff);
 					} catch (Exception e) {
 						log.error("Error buffer file", e);
-//						throw new RuntimeException(e);
 					}
 
 				});
@@ -164,8 +210,50 @@ public class ContributionTreePage extends FormPage {
 				log.error("Contribution tree export failed", e);
 				throw new RuntimeException(e);
 			}
-
 		});
+	}
+
+	private String unit() {
+		var ref = upStreamTree.ref;
+		if (ref == null)
+			return "";
+		if (ref instanceof EnviFlow)
+			return Labels.refUnit((EnviFlow) ref);
+		if (ref instanceof FlowDescriptor)
+			return Labels.refUnit((FlowDescriptor) ref);
+		if (ref instanceof ImpactDescriptor)
+			return ((ImpactDescriptor) ref).referenceUnit;
+		if (ref instanceof CostResultDescriptor)
+			return Labels.getReferenceCurrencyCode();
+		return "";
+	}
+
+	private void write(Path path) {
+		row++;
+		values.add(path.node.result());
+		int col = path.length;
+		maxColumn = Math.max(col, maxColumn);
+		var node = path.node;
+		if (node.provider() == null || node.provider().provider() == null)
+			return;
+		var label = Labels.name(node.provider().provider());
+		Excel.cell(sheet, row, col, label);
+	}
+
+	private void traverse(Path path) {
+		if (row >= 1048574) {
+			return;
+		}
+
+		var node = path.node;
+		double result = path.node.result();
+
+		if (result == 0)
+			return;
+		write(path);
+		for (var child : upStreamTree.childs(node)) {
+			traverse(path.append(child));
+		}
 	}
 
 	private void createTree(FormToolkit tk, Composite comp) {
