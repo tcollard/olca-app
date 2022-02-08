@@ -37,6 +37,19 @@ import org.openlca.core.results.UpstreamTree;
 
 import org.openlca.app.rcp.images.Images;
 import org.openlca.app.util.Controls;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.openlca.io.xls.Excel;
+import org.openlca.app.components.FileChooser;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Objects;
+
 
 public class ContributionTreePage extends FormPage {
 
@@ -46,6 +59,13 @@ public class ContributionTreePage extends FormPage {
 
 	private TreeViewer tree;
 	private Object selection;
+
+	private File file;
+	private Sheet sheet;
+	private int row;
+	private int maxColumn;
+	private double totalResult;
+
 
 
 	public ContributionTreePage(AnalyzeEditor editor) {
@@ -90,21 +110,61 @@ public class ContributionTreePage extends FormPage {
 
 
 	private void createExportButton(Composite comp, FormToolkit tk) {
+		Logger log = LoggerFactory.getLogger(getClass());
+
 		var b = tk.createButton(comp, M.ExportToExcel, SWT.NONE);
 		b.setImage(Images.get(FileType.EXCEL));
 		Controls.onSelect(b, $ -> {
 			System.out.println("IS CLICKED");
 			var allImpacts = this.resultItems.impacts();
+			System.out.println("SIZE: " + allImpacts.size());
+
+			file = FileChooser.forSavingFile(
+					M.Export, "contribution_tree.xlsx");
+
+			System.out.println("FILE: " + file);
+			// CREATION OF EXCEL DOCUMENT
+			try (var wb = new XSSFWorkbook()){
 	
-			allImpacts.forEach((elem) -> {
-				System.out.println("IMPACT ");
-				System.out.println(elem);
-				UpstreamTree model = result.getTree(elem);
-				tree.setInput(model);
-			});
-			// for (var i = 0; i < allImpacts.length; i++) {
-				// System.out.println("IMPACT ", + i + ": " + allImpacts[i]);
-			// }
+				allImpacts.forEach((elem) -> {
+					System.out.println("IMPACT ");
+					System.out.println(elem);
+					sheet = wb.createSheet(elem.name);
+
+					var header = Excel.headerStyle(wb);
+					Excel.cell(sheet, 0, 0, "Impact category: " + elem.name).ifPresent(c -> c.setCellStyle(header));
+					Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(header));
+
+
+					UpstreamTree model = result.getTree(elem);
+					tree.setInput(model);
+					System.out.println("REF: ");
+					System.out.println(((ImpactDescriptor) model.ref).referenceUnit);
+
+					// write the tree
+					row = 1;
+					maxColumn = 0;
+					totalResult = model.root.result();
+					System.out.println("TOTAL RESULT: " + totalResult);
+
+					// write the file
+					try(var fout = new FileOutputStream(file);
+						var buff = new BufferedOutputStream(fout)){
+
+						wb.write(buff);
+					} catch (Exception e) {
+						log.error("Error buffer file", e);
+//						throw new RuntimeException(e);
+					}
+
+				});
+
+
+			} catch (Exception e) {
+				log.error("Contribution tree export failed", e);
+				throw new RuntimeException(e);
+			}
+
 		});
 	}
 
