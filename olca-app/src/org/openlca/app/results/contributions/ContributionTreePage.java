@@ -35,6 +35,9 @@ import org.openlca.core.results.ResultItemView;
 import org.openlca.core.results.UpstreamNode;
 import org.openlca.core.results.UpstreamTree;
 
+import org.openlca.app.rcp.images.Images;
+import org.openlca.app.util.Controls;
+
 public class ContributionTreePage extends FormPage {
 
 	private final FullResult result;
@@ -50,22 +53,40 @@ public class ContributionTreePage extends FormPage {
 		this.result = editor.result;
 		this.setup = editor.setup;
 		this.resultItems = editor.resultItems;
+		System.out.println("===> CONTRIBUTION TREE PAGE 1 <===");
 	}
 
 	@Override
 	protected void createFormContent(IManagedForm mform) {
+		System.out.println("===> CONTRIBUTION TREE PAGE 2 <===");
+
 		FormToolkit tk = mform.getToolkit();
+		System.out.println("===> tk: " + tk);
+
 		ScrolledForm form = UI.formHeader(mform,
 			Labels.name(setup.target()),
 			Images.get(result));
+		System.out.println("===> form: " + form);
 		Composite body = UI.formBody(form, tk);
+		System.out.println("===> BODY: " + body);
+
 		Composite comp = tk.createComposite(body);
+		System.out.println("===> BEFORE CREATE BUTTON <===");
+
+		createExportButton(comp, tk);
+
+		System.out.println("===> AFTER CREATE BUTTON <===");
+
 		UI.gridLayout(comp, 2);
+		System.out.println("===> comp: " + comp);
+
 		var selector = ResultItemSelector
 			.on(resultItems)
 			.withSelectionHandler(new SelectionHandler())
 			.create(comp, tk);
 		Composite treeComp = tk.createComposite(body);
+		System.out.println("===> treeComp: " + treeComp);
+
 		UI.gridLayout(treeComp, 1);
 		UI.gridData(treeComp, true, true);
 		createTree(tk, treeComp);
@@ -73,7 +94,19 @@ public class ContributionTreePage extends FormPage {
 		selector.initWithEvent();
 	}
 
+
+	private void createExportButton(Composite comp, FormToolkit tk) {
+		var b = tk.createButton(comp, M.ExportToExcel, SWT.NONE);
+		b.setImage(Images.get(FileType.EXCEL));
+		Controls.onSelect(b, $ -> {
+			System.out.println("IS CLICKED");
+			}
+		);
+	}
+
 	private void createTree(FormToolkit tk, Composite comp) {
+		System.out.println("===> CONTRIBUTION TREE PAGE 3 <===");
+
 		var headers = new String[]{
 			M.Contribution,
 			M.Process,
@@ -94,6 +127,8 @@ public class ContributionTreePage extends FormPage {
 
 		// action bindings
 		Action onOpen = Actions.onOpen(() -> {
+			System.out.println("===> On open <===");
+
 			UpstreamNode n = Viewers.getFirstSelected(tree);
 			if (n == null || n.provider() == null)
 				return;
@@ -123,8 +158,13 @@ public class ContributionTreePage extends FormPage {
 
 		@Override
 		public void onImpactSelected(ImpactDescriptor impact) {
+			System.out.println("===> On impact selected <===");
+			System.out.println("===> INPACET SELECTED:  " + impact);
+
 			selection = impact;
 			UpstreamTree model = result.getTree(impact);
+			System.out.println("===> Model: " + model);
+
 			tree.setInput(model);
 		}
 
