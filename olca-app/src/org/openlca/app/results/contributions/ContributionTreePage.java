@@ -61,21 +61,12 @@ public class ContributionTreePage extends FormPage {
 		System.out.println("===> CONTRIBUTION TREE PAGE 2 <===");
 
 		FormToolkit tk = mform.getToolkit();
-		System.out.println("===> tk: " + tk);
-
 		ScrolledForm form = UI.formHeader(mform,
 			Labels.name(setup.target()),
 			Images.get(result));
-		System.out.println("===> form: " + form);
 		Composite body = UI.formBody(form, tk);
-		System.out.println("===> BODY: " + body);
-
 		Composite comp = tk.createComposite(body);
-
 		UI.gridLayout(comp, 2);
-		System.out.println("===> comp: " + comp);
-
-
 		var selector = ResultItemSelector
 			.on(resultItems)
 			.withSelectionHandler(new SelectionHandler())
@@ -83,12 +74,10 @@ public class ContributionTreePage extends FormPage {
 
 		Composite exportComp = tk.createComposite(body);
 		System.out.println("===> BEFORE CREATE BUTTON <===");
-
 		createExportButton(exportComp, tk);
-
 		System.out.println("===> AFTER CREATE BUTTON <===");
-
 		UI.gridLayout(exportComp, 1);
+
 		Composite treeComp = tk.createComposite(body);
 		System.out.println("===> treeComp: " + treeComp);
 
@@ -105,8 +94,18 @@ public class ContributionTreePage extends FormPage {
 		b.setImage(Images.get(FileType.EXCEL));
 		Controls.onSelect(b, $ -> {
 			System.out.println("IS CLICKED");
-			}
-		);
+			var allImpacts = this.resultItems.impacts();
+	
+			allImpacts.forEach((elem) -> {
+				System.out.println("IMPACT ");
+				System.out.println(elem);
+				UpstreamTree model = result.getTree(elem);
+				tree.setInput(model);
+			});
+			// for (var i = 0; i < allImpacts.length; i++) {
+				// System.out.println("IMPACT ", + i + ": " + allImpacts[i]);
+			// }
+		});
 	}
 
 	private void createTree(FormToolkit tk, Composite comp) {
