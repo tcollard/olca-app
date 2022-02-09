@@ -38,6 +38,7 @@ import org.openlca.core.results.UpstreamTree;
 import org.openlca.app.rcp.images.Images;
 import org.openlca.app.util.Controls;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.openlca.io.xls.Excel;
 import org.openlca.app.components.FileChooser;
@@ -72,14 +73,9 @@ public class ContributionTreePage extends FormPage {
 	private int maxColumn;
 	private double totalResult;
 	private final TDoubleArrayList resultValues = new TDoubleArrayList(100);
-	// private final TDoubleArrayList requiredAmountValues = new TDoubleArrayList(100);
 	private final List<String> requiredAmountValues = new ArrayList<String>();
 	private UpstreamTree upStreamTree;
 	private int maxDepth = 2;
-
-
-
-
 
 
 	public ContributionTreePage(AnalyzeEditor editor) {
@@ -105,8 +101,11 @@ public class ContributionTreePage extends FormPage {
 			.create(comp, tk);
 
 		Composite exportComp = tk.createComposite(body);
-		createExportButton(exportComp, tk);
-		UI.gridLayout(exportComp, 1);
+		createExportButton(exportComp, tk, "Impact");
+		if (resultItems.hasCosts() == true) {
+			createExportButton(exportComp, tk, "Cost");
+		}
+		UI.gridLayout(exportComp, 2);
 
 		Composite treeComp = tk.createComposite(body);
 
@@ -145,74 +144,79 @@ public class ContributionTreePage extends FormPage {
 		}
 	}
 
-
-	private void createExportButton(Composite comp, FormToolkit tk) {
-		Logger log = LoggerFactory.getLogger(getClass());
-
-		var b = tk.createButton(comp, "Impacts: " + M.ExportToExcel, SWT.NONE);
+	private void createExportButton(Composite comp, FormToolkit tk, String type) {
+		var b = tk.createButton(comp, type + ": " + M.ExportToExcel, SWT.NONE);
 		b.setImage(Images.get(FileType.EXCEL));
 		Controls.onSelect(b, $ -> {
-			var allImpacts = this.resultItems.impacts();
-
 			file = FileChooser.forSavingFile(
-					M.Export, "contribution_tree.xlsx");
-
-			// CREATION OF EXCEL DOCUMENT
-			try (var wb = new XSSFWorkbook()){
-	
-				allImpacts.forEach((elem) -> {
-					sheet = wb.createSheet(elem.name);
-
-					var header = Excel.headerStyle(wb);
-					Excel.cell(sheet, 0, 0, "Impact category: " + elem.name).ifPresent(c -> c.setCellStyle(header));
-					Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(header));
-
-
-					upStreamTree = result.getTree(elem);
-					tree.setInput(upStreamTree);
-
-					// write the tree
-					row = 1;
-					maxColumn = 0;
-					totalResult = upStreamTree.root.result();
-					Path path = new Path(upStreamTree.root);
-					traverse(path);
-
-					// write the all values
-					var unit = unit();
-					var resultHeader = Strings.nullOrEmpty(unit) ? "Result" : "Result [" + unit + "]";
-					var contributionHeader = "Contribution";
-					var requiredAmountHeader = "Required Amount";
-					Excel.cell(sheet, 1, maxColumn + 1, requiredAmountHeader)
-						.ifPresent(c -> c.setCellStyle(header));
-					Excel.cell(sheet, 1, maxColumn + 2, resultHeader)
-						.ifPresent(c -> c.setCellStyle(header));
-					Excel.cell(sheet, 1, maxColumn + 3, contributionHeader)
-						.ifPresent(c -> c.setCellStyle(header));
-					for (int i = 0; i < resultValues.size(); i++) {
-						Excel.cell(sheet, i + 2, maxColumn + 1, requiredAmountValues.get(i));
-						Excel.cell(sheet, i + 2, maxColumn + 2, resultValues.get(i));
-						var percent = resultValues.get(i) / resultValues.get(0) * 100;
-						Excel.cell(sheet, i + 2, maxColumn + 3, percent + " %");
-					}
-					resultValues.clear();
-					requiredAmountValues.clear();
-					
-				});
-				// write the file
-				try(var fout = new FileOutputStream(file);
-					var buff = new BufferedOutputStream(fout)){
-					wb.write(buff);
-				} catch (Exception e) {
-					log.error("Error buffer file", e);
-				}
-
-
-			} catch (Exception e) {
-				log.error("Contribution tree export failed", e);
-				throw new RuntimeException(e);
+				M.Export, type + ".xlsx");
+			if (type == "Impact") {
+				exportImpact();
+			} else if (type == "Cost") {
+				exportCost();
 			}
 		});
+	}
+
+	private void exportCost() {
+		Logger log = LoggerFactory.getLogger(getClass());
+		// CREATION OF EXCEL DOCUMENT
+		try (var wb = new XSSFWorkbook()){
+			sheet = wb.createSheet("Added Value");
+			var addedValueHeader = Excel.headerStyle(wb);
+			Excel.cell(sheet, 0, 0, "Costcategory: Added Value").ifPresent(c -> c.setCellStyle(addedValueHeader));
+			Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(addedValueHeader));
+
+			upStreamTree = result.getAddedValueTree();
+
+			writeTree();
+			writeValues(addedValueHeader);
+			clearValues();
+
+			sheet = wb.createSheet("Net Costs");
+			var netCostsHeader = Excel.headerStyle(wb);
+			Excel.cell(sheet, 0, 0, "Cost category: Net Value").ifPresent(c -> c.setCellStyle(netCostsHeader));
+			Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(netCostsHeader));
+	
+			upStreamTree = result.getCostTree();
+
+			writeTree();
+			writeValues(netCostsHeader);
+			clearValues();
+
+			writeFile(wb);
+		} catch (Exception e) {
+			log.error("Contribution tree export failed", e);
+			throw new RuntimeException(e);
+		}
+
+		
+	}
+
+	private void exportImpact() {
+		Logger log = LoggerFactory.getLogger(getClass());
+		// CREATION OF EXCEL DOCUMENT
+		try (var wb = new XSSFWorkbook()){
+			var allImpacts = this.resultItems.impacts();
+
+			allImpacts.forEach((elem) -> {
+				sheet = wb.createSheet(elem.name);
+
+				var header = Excel.headerStyle(wb);
+				Excel.cell(sheet, 0, 0, "Impact category: " + elem.name).ifPresent(c -> c.setCellStyle(header));
+				Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(header));
+
+				upStreamTree = result.getTree(elem);
+				
+				writeTree();
+				writeValues(header);
+				clearValues();
+			});
+			writeFile(wb);
+		} catch (Exception e) {
+			log.error("Contribution tree export failed", e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	private String unit() {
@@ -259,6 +263,49 @@ public class ContributionTreePage extends FormPage {
 		write(path);
 		for (var child : upStreamTree.childs(node)) {
 			traverse(path.append(child));
+		}
+	}
+
+	private void writeTree() {
+		row = 1;
+		maxColumn = 0;
+		totalResult = upStreamTree.root.result();
+		Path path = new Path(upStreamTree.root);
+		traverse(path);
+	}
+
+	private void writeValues(CellStyle header) {
+		var unit = unit();
+		var resultHeader = Strings.nullOrEmpty(unit) ? "Result" : "Result [" + unit + "]";
+		var contributionHeader = "Contribution";
+		var requiredAmountHeader = "Required Amount";
+		Excel.cell(sheet, 1, maxColumn + 1, requiredAmountHeader)
+			.ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 1, maxColumn + 2, resultHeader)
+			.ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 1, maxColumn + 3, contributionHeader)
+			.ifPresent(c -> c.setCellStyle(header));
+		for (int i = 0; i < resultValues.size(); i++) {
+			Excel.cell(sheet, i + 2, maxColumn + 1, requiredAmountValues.get(i));
+			Excel.cell(sheet, i + 2, maxColumn + 2, resultValues.get(i));
+			var percent = resultValues.get(i) / resultValues.get(0) * 100;
+			Excel.cell(sheet, i + 2, maxColumn + 3, percent + " %");
+		}
+	}
+
+	private void clearValues() {
+		resultValues.clear();
+		requiredAmountValues.clear();
+	}
+
+	private void writeFile(XSSFWorkbook wb) {
+		Logger log = LoggerFactory.getLogger(getClass());
+
+		try(var fout = new FileOutputStream(file);
+			var buff = new BufferedOutputStream(fout)){
+			wb.write(buff);
+		} catch (Exception e) {
+			log.error("Error buffer file", e);
 		}
 	}
 
