@@ -52,6 +52,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -69,7 +71,9 @@ public class ContributionTreePage extends FormPage {
 	private int row;
 	private int maxColumn;
 	private double totalResult;
-	private final TDoubleArrayList values = new TDoubleArrayList(100);
+	private final TDoubleArrayList resultValues = new TDoubleArrayList(100);
+	// private final TDoubleArrayList requiredAmountValues = new TDoubleArrayList(100);
+	private final List<String> requiredAmountValues = new ArrayList<String>();
 	private UpstreamTree upStreamTree;
 	private int maxDepth = 2;
 
@@ -145,7 +149,7 @@ public class ContributionTreePage extends FormPage {
 	private void createExportButton(Composite comp, FormToolkit tk) {
 		Logger log = LoggerFactory.getLogger(getClass());
 
-		var b = tk.createButton(comp, M.ExportToExcel, SWT.NONE);
+		var b = tk.createButton(comp, "Impacts: " + M.ExportToExcel, SWT.NONE);
 		b.setImage(Images.get(FileType.EXCEL));
 		Controls.onSelect(b, $ -> {
 			var allImpacts = this.resultItems.impacts();
@@ -174,18 +178,25 @@ public class ContributionTreePage extends FormPage {
 					Path path = new Path(upStreamTree.root);
 					traverse(path);
 
-					// write the values
+					// write the all values
 					var unit = unit();
 					var resultHeader = Strings.nullOrEmpty(unit) ? "Result" : "Result [" + unit + "]";
-					Excel.cell(sheet, 1, maxColumn + 1, resultHeader)
+					var contributionHeader = "Contribution";
+					var requiredAmountHeader = "Required Amount";
+					Excel.cell(sheet, 1, maxColumn + 1, requiredAmountHeader)
 						.ifPresent(c -> c.setCellStyle(header));
-					for (int i = 0; i < values.size(); i++) {
-						Excel.cell(sheet, i + 2, maxColumn + 1, values.get(i));
-						var percent = values.get(i) / values.get(0) * 100;
-						Excel.cell(sheet, i + 2, maxColumn + 2, percent + " %");
+					Excel.cell(sheet, 1, maxColumn + 2, resultHeader)
+						.ifPresent(c -> c.setCellStyle(header));
+					Excel.cell(sheet, 1, maxColumn + 3, contributionHeader)
+						.ifPresent(c -> c.setCellStyle(header));
+					for (int i = 0; i < resultValues.size(); i++) {
+						Excel.cell(sheet, i + 2, maxColumn + 1, requiredAmountValues.get(i));
+						Excel.cell(sheet, i + 2, maxColumn + 2, resultValues.get(i));
+						var percent = resultValues.get(i) / resultValues.get(0) * 100;
+						Excel.cell(sheet, i + 2, maxColumn + 3, percent + " %");
 					}
-					values.clear();
-
+					resultValues.clear();
+					requiredAmountValues.clear();
 					
 				});
 				// write the file
@@ -221,7 +232,8 @@ public class ContributionTreePage extends FormPage {
 
 	private void write(Path path) {
 		row++;
-		values.add(path.node.result());
+		resultValues.add(path.node.result());
+		requiredAmountValues.add(path.node.requiredAmount() + " " + Labels.refUnit(path.node.provider()));
 		int col = path.length;
 		maxColumn = Math.max(col, maxColumn);
 		var node = path.node;
