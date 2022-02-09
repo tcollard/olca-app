@@ -83,12 +83,10 @@ public class ContributionTreePage extends FormPage {
 		this.result = editor.result;
 		this.setup = editor.setup;
 		this.resultItems = editor.resultItems;
-		System.out.println("===> CONTRIBUTION TREE PAGE 1 <===");
 	}
 
 	@Override
 	protected void createFormContent(IManagedForm mform) {
-		System.out.println("===> CONTRIBUTION TREE PAGE 2 <===");
 
 		FormToolkit tk = mform.getToolkit();
 		ScrolledForm form = UI.formHeader(mform,
@@ -103,13 +101,10 @@ public class ContributionTreePage extends FormPage {
 			.create(comp, tk);
 
 		Composite exportComp = tk.createComposite(body);
-		System.out.println("===> BEFORE CREATE BUTTON <===");
 		createExportButton(exportComp, tk);
-		System.out.println("===> AFTER CREATE BUTTON <===");
 		UI.gridLayout(exportComp, 1);
 
 		Composite treeComp = tk.createComposite(body);
-		System.out.println("===> treeComp: " + treeComp);
 
 		UI.gridLayout(treeComp, 1);
 		UI.gridData(treeComp, true, true);
@@ -153,20 +148,15 @@ public class ContributionTreePage extends FormPage {
 		var b = tk.createButton(comp, M.ExportToExcel, SWT.NONE);
 		b.setImage(Images.get(FileType.EXCEL));
 		Controls.onSelect(b, $ -> {
-			System.out.println("IS CLICKED");
 			var allImpacts = this.resultItems.impacts();
-			System.out.println("SIZE: " + allImpacts.size());
 
 			file = FileChooser.forSavingFile(
 					M.Export, "contribution_tree.xlsx");
 
-			System.out.println("FILE: " + file);
 			// CREATION OF EXCEL DOCUMENT
 			try (var wb = new XSSFWorkbook()){
 	
 				allImpacts.forEach((elem) -> {
-					System.out.println("IMPACT ");
-					System.out.println(elem);
 					sheet = wb.createSheet(elem.name);
 
 					var header = Excel.headerStyle(wb);
@@ -176,14 +166,11 @@ public class ContributionTreePage extends FormPage {
 
 					upStreamTree = result.getTree(elem);
 					tree.setInput(upStreamTree);
-					System.out.println("REF: ");
-					System.out.println(((ImpactDescriptor) upStreamTree.ref).referenceUnit);
 
 					// write the tree
 					row = 1;
 					maxColumn = 0;
 					totalResult = upStreamTree.root.result();
-					System.out.println("TOTAL RESULT: " + totalResult);
 					Path path = new Path(upStreamTree.root);
 					traverse(path);
 
@@ -204,8 +191,6 @@ public class ContributionTreePage extends FormPage {
 				// write the file
 				try(var fout = new FileOutputStream(file);
 					var buff = new BufferedOutputStream(fout)){
-					System.out.println("FOUT: " + fout.getClass().getName());
-					System.out.println("BUFF: " + buff.getClass().getName());
 					wb.write(buff);
 				} catch (Exception e) {
 					log.error("Error buffer file", e);
@@ -266,7 +251,6 @@ public class ContributionTreePage extends FormPage {
 	}
 
 	private void createTree(FormToolkit tk, Composite comp) {
-		System.out.println("===> CONTRIBUTION TREE PAGE 3 <===");
 
 		var headers = new String[]{
 			M.Contribution,
@@ -288,7 +272,6 @@ public class ContributionTreePage extends FormPage {
 
 		// action bindings
 		Action onOpen = Actions.onOpen(() -> {
-			System.out.println("===> On open <===");
 
 			UpstreamNode n = Viewers.getFirstSelected(tree);
 			if (n == null || n.provider() == null)
@@ -319,12 +302,9 @@ public class ContributionTreePage extends FormPage {
 
 		@Override
 		public void onImpactSelected(ImpactDescriptor impact) {
-			System.out.println("===> On impact selected <===");
-			System.out.println("===> INPACET SELECTED:  " + impact);
 
 			selection = impact;
 			UpstreamTree model = result.getTree(impact);
-			System.out.println("===> Model: " + model);
 
 			tree.setInput(model);
 		}
