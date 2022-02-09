@@ -71,6 +71,8 @@ public class ContributionTreePage extends FormPage {
 	private double totalResult;
 	private final TDoubleArrayList values = new TDoubleArrayList(100);
 	private UpstreamTree upStreamTree;
+	private int maxDepth = 2;
+
 
 
 
@@ -192,18 +194,22 @@ public class ContributionTreePage extends FormPage {
 						.ifPresent(c -> c.setCellStyle(header));
 					for (int i = 0; i < values.size(); i++) {
 						Excel.cell(sheet, i + 2, maxColumn + 1, values.get(i));
+						var percent = values.get(i) / values.get(0) * 100;
+						Excel.cell(sheet, i + 2, maxColumn + 2, percent + " %");
 					}
+					values.clear();
 
-					// write the file
-					try(var fout = new FileOutputStream(file);
-						var buff = new BufferedOutputStream(fout)){
-
-						wb.write(buff);
-					} catch (Exception e) {
-						log.error("Error buffer file", e);
-					}
-
+					
 				});
+				// write the file
+				try(var fout = new FileOutputStream(file);
+					var buff = new BufferedOutputStream(fout)){
+					System.out.println("FOUT: " + fout.getClass().getName());
+					System.out.println("BUFF: " + buff.getClass().getName());
+					wb.write(buff);
+				} catch (Exception e) {
+					log.error("Error buffer file", e);
+				}
 
 
 			} catch (Exception e) {
@@ -250,6 +256,9 @@ public class ContributionTreePage extends FormPage {
 
 		if (result == 0)
 			return;
+		if (maxDepth > 0 && path.length > maxDepth)
+			return;
+
 		write(path);
 		for (var child : upStreamTree.childs(node)) {
 			traverse(path.append(child));
