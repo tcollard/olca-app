@@ -70,10 +70,11 @@ public class ContributionTreePage extends FormPage {
 	private File file;
 	private Sheet sheet;
 	private int row;
+	private int rowValue;
 	private int maxColumn;
-	private double totalResult;
-	private final TDoubleArrayList resultValues = new TDoubleArrayList(100);
-	private final List<String> requiredAmountValues = new ArrayList<String>();
+	private final TDoubleArrayList resultValues = new TDoubleArrayList(1000);
+	private final TDoubleArrayList requiredAmountValues = new TDoubleArrayList(1000);
+	private final List<String> requiredAmountUnits = new ArrayList<String>();
 	private UpstreamTree upStreamTree;
 	private int maxDepth = 2;
 
@@ -101,11 +102,8 @@ public class ContributionTreePage extends FormPage {
 			.create(comp, tk);
 
 		Composite exportComp = tk.createComposite(body);
-		createExportButton(exportComp, tk, "Impact");
-		if (resultItems.hasCosts() == true) {
-			createExportButton(exportComp, tk, "Cost");
-		}
-		UI.gridLayout(exportComp, 2);
+		createExportButton(exportComp, tk);
+		UI.gridLayout(exportComp, 1);
 
 		Composite treeComp = tk.createComposite(body);
 
@@ -116,6 +114,87 @@ public class ContributionTreePage extends FormPage {
 		selector.initWithEvent();
 	}
 
+	private void createExportButton(Composite comp, FormToolkit tk) {
+		var b = tk.createButton(comp, M.ExportToExcel, SWT.NONE);
+		b.setImage(Images.get(FileType.EXCEL));
+		Controls.onSelect(b, $ -> {
+			file = FileChooser.forSavingFile(
+				M.Export,  "contribution_tree.xlsx");
+			exportImpact();
+		});
+	}
+
+	private void exportImpact() {
+		Logger log = LoggerFactory.getLogger(getClass());
+		// CREATION OF EXCEL DOCUMENT
+		try (var wb = new XSSFWorkbook()){
+			row = 0;
+			rowValue = 1;
+			var allImpacts = this.resultItems.impacts();
+			sheet = wb.createSheet("Impacts");
+			allImpacts.forEach((elem) -> {
+				var header = Excel.headerStyle(wb);
+				createSheetHeader(sheet, header, "Category Impact");
+
+				upStreamTree = result.getTree(elem);
+				
+				writeTree();
+				writeValues(header, elem.name);
+				clearValues();
+			});
+	
+			if (resultItems.hasCosts() == true) {
+				row = 0;
+				rowValue = 1;
+				sheet = wb.createSheet("Costs");
+				var costHeader = Excel.headerStyle(wb);
+				createSheetHeader(sheet, costHeader, "Costs");
+
+				upStreamTree = result.getAddedValueTree();
+
+				writeTree();
+				writeValues(costHeader, "Added Value");
+				clearValues();
+
+				upStreamTree = result.getCostTree();
+
+				writeTree();
+				writeValues(costHeader, "Net Value");
+				clearValues();
+
+			}
+			
+			writeFile(wb);
+		} catch (Exception e) {
+			log.error("Contribution tree export failed", e);
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void createSheetHeader(Sheet sheet, CellStyle header, String type) {
+		Excel.cell(sheet, 0, 0, type).ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 1, "Process").ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 2, "Required Amount").ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 3, "Unit [required amount]").ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 4, "Result").ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 5, "Unit [result]").ifPresent(c -> c.setCellStyle(header));
+		Excel.cell(sheet, 0, 6, "Contribution").ifPresent(c -> c.setCellStyle(header));
+	}
+
+	private String unit() {
+		var ref = upStreamTree.ref;
+		if (ref == null)
+			return "";
+		if (ref instanceof EnviFlow)
+			return Labels.refUnit((EnviFlow) ref);
+		if (ref instanceof FlowDescriptor)
+			return Labels.refUnit((FlowDescriptor) ref);
+		if (ref instanceof ImpactDescriptor)
+			return ((ImpactDescriptor) ref).referenceUnit;
+		if (ref instanceof CostResultDescriptor)
+			return Labels.getReferenceCurrencyCode();
+		return "";
+	}
 
 	private static class Path {
 		final Path prefix;
@@ -144,102 +223,12 @@ public class ContributionTreePage extends FormPage {
 		}
 	}
 
-	private void createExportButton(Composite comp, FormToolkit tk, String type) {
-		var b = tk.createButton(comp, type + ": " + M.ExportToExcel, SWT.NONE);
-		b.setImage(Images.get(FileType.EXCEL));
-		Controls.onSelect(b, $ -> {
-			file = FileChooser.forSavingFile(
-				M.Export, type + ".xlsx");
-			if (type == "Impact") {
-				exportImpact();
-			} else if (type == "Cost") {
-				exportCost();
-			}
-		});
-	}
-
-	private void exportCost() {
-		Logger log = LoggerFactory.getLogger(getClass());
-		// CREATION OF EXCEL DOCUMENT
-		try (var wb = new XSSFWorkbook()){
-			sheet = wb.createSheet("Added Value");
-			var addedValueHeader = Excel.headerStyle(wb);
-			Excel.cell(sheet, 0, 0, "Costcategory: Added Value").ifPresent(c -> c.setCellStyle(addedValueHeader));
-			Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(addedValueHeader));
-
-			upStreamTree = result.getAddedValueTree();
-
-			writeTree();
-			writeValues(addedValueHeader);
-			clearValues();
-
-			sheet = wb.createSheet("Net Costs");
-			var netCostsHeader = Excel.headerStyle(wb);
-			Excel.cell(sheet, 0, 0, "Cost category: Net Value").ifPresent(c -> c.setCellStyle(netCostsHeader));
-			Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(netCostsHeader));
-	
-			upStreamTree = result.getCostTree();
-
-			writeTree();
-			writeValues(netCostsHeader);
-			clearValues();
-
-			writeFile(wb);
-		} catch (Exception e) {
-			log.error("Contribution tree export failed", e);
-			throw new RuntimeException(e);
-		}
-
-		
-	}
-
-	private void exportImpact() {
-		Logger log = LoggerFactory.getLogger(getClass());
-		// CREATION OF EXCEL DOCUMENT
-		try (var wb = new XSSFWorkbook()){
-			var allImpacts = this.resultItems.impacts();
-
-			allImpacts.forEach((elem) -> {
-				sheet = wb.createSheet(elem.name);
-
-				var header = Excel.headerStyle(wb);
-				Excel.cell(sheet, 0, 0, "Impact category: " + elem.name).ifPresent(c -> c.setCellStyle(header));
-				Excel.cell(sheet, 1, 0, "Processes").ifPresent(c -> c.setCellStyle(header));
-
-				upStreamTree = result.getTree(elem);
-				
-				writeTree();
-				writeValues(header);
-				clearValues();
-			});
-			writeFile(wb);
-		} catch (Exception e) {
-			log.error("Contribution tree export failed", e);
-			throw new RuntimeException(e);
-		}
-	}
-
-	private String unit() {
-		var ref = upStreamTree.ref;
-		if (ref == null)
-			return "";
-		if (ref instanceof EnviFlow)
-			return Labels.refUnit((EnviFlow) ref);
-		if (ref instanceof FlowDescriptor)
-			return Labels.refUnit((FlowDescriptor) ref);
-		if (ref instanceof ImpactDescriptor)
-			return ((ImpactDescriptor) ref).referenceUnit;
-		if (ref instanceof CostResultDescriptor)
-			return Labels.getReferenceCurrencyCode();
-		return "";
-	}
-
 	private void write(Path path) {
-		row++;
+		row += 1;
 		resultValues.add(path.node.result());
-		requiredAmountValues.add(path.node.requiredAmount() + " " + Labels.refUnit(path.node.provider()));
+		requiredAmountValues.add(path.node.requiredAmount());
+		requiredAmountUnits.add(Labels.refUnit(path.node.provider()));
 		int col = path.length;
-		maxColumn = Math.max(col, maxColumn);
 		var node = path.node;
 		if (node.provider() == null || node.provider().provider() == null)
 			return;
@@ -267,29 +256,26 @@ public class ContributionTreePage extends FormPage {
 	}
 
 	private void writeTree() {
-		row = 1;
 		maxColumn = 0;
-		totalResult = upStreamTree.root.result();
 		Path path = new Path(upStreamTree.root);
 		traverse(path);
 	}
 
-	private void writeValues(CellStyle header) {
+	private void writeValues(CellStyle header, String categoryImpact) {
 		var unit = unit();
-		var resultHeader = Strings.nullOrEmpty(unit) ? "Result" : "Result [" + unit + "]";
-		var contributionHeader = "Contribution";
-		var requiredAmountHeader = "Required Amount";
-		Excel.cell(sheet, 1, maxColumn + 1, requiredAmountHeader)
-			.ifPresent(c -> c.setCellStyle(header));
-		Excel.cell(sheet, 1, maxColumn + 2, resultHeader)
-			.ifPresent(c -> c.setCellStyle(header));
-		Excel.cell(sheet, 1, maxColumn + 3, contributionHeader)
-			.ifPresent(c -> c.setCellStyle(header));
+
 		for (int i = 0; i < resultValues.size(); i++) {
-			Excel.cell(sheet, i + 2, maxColumn + 1, requiredAmountValues.get(i));
-			Excel.cell(sheet, i + 2, maxColumn + 2, resultValues.get(i));
-			var percent = resultValues.get(i) / resultValues.get(0) * 100;
-			Excel.cell(sheet, i + 2, maxColumn + 3, percent + " %");
+			Excel.cell(sheet, rowValue, maxColumn, categoryImpact);
+
+			Excel.cell(sheet, rowValue, maxColumn + 2, requiredAmountValues.get(i));
+			Excel.cell(sheet, rowValue, maxColumn + 3, requiredAmountUnits.get(i));
+			
+			Excel.cell(sheet, rowValue, maxColumn + 4, resultValues.get(i));
+			Excel.cell(sheet, rowValue, maxColumn + 5, unit);
+
+			var percent = resultValues.get(i) / resultValues.get(0) * 100 + "%";
+			Excel.cell(sheet, rowValue, maxColumn + 6, percent.replace('.', ','));
+			rowValue += 1;
 		}
 	}
 
